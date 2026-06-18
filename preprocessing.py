@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
 
 def encode_features(df):
     """
@@ -33,6 +34,46 @@ def encode_features(df):
         print(f"Unique values after encoding for '{col}':\n{df[col].unique()}\n")
         
     return df
+
+def split_data(df):
+    """
+    Separates features (X) and target (y), then splits the data into
+    training and testing sets.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame which should include the 'attack' column.
+
+    Returns:
+        tuple: A tuple containing:
+            - pd.DataFrame: X_train (features for training)
+            - pd.DataFrame: X_test (features for testing)
+            - pd.Series: y_train (target for training)
+            - pd.Series: y_test (target for testing)
+    """
+    # Splitting the data into training and testing sets is a fundamental step
+    # in machine learning. It allows us to evaluate the performance of our model
+    # on unseen data, preventing overfitting. The model learns patterns from the
+    # training data and its generalization capability is tested on the test data.
+    print("--- Splitting data into training and testing sets ---")
+    
+    # Separate features (X) and target (y)
+    X = df.drop('attack', axis=1)
+    y = df['attack']
+
+    # Split the data into 80% train and 20% test.
+    # random_state ensures that the split is reproducible. If you run the code
+    # multiple times with the same random_state, you will get the same train/test split.
+    # This is crucial for consistent experimentation and debugging.
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Print the shapes of the resulting datasets
+    print(f"Shape of X_train: {X_train.shape}")
+    print(f"Shape of X_test: {X_test.shape}")
+    print(f"Shape of y_train: {y_train.shape}")
+    print(f"Shape of y_test: {y_test.shape}")
+    print("\n")
+
+    return X_train, X_test, y_train, y_test
 
 def scale_features(df):
     """
