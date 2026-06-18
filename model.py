@@ -23,7 +23,7 @@ def train_decision_tree(X_train, y_train):
     # to generalize well to new, unseen data. Setting a maximum depth helps
     # to find a balance between bias and variance.
     print("--- Training Decision Tree Classifier on X_train/y_train ---")
-    model = DecisionTreeClassifier(max_depth=10, random_state=42)
+    model = DecisionTreeClassifier(max_depth=5, random_state=42)
     model.fit(X_train, y_train)
     print("Decision Tree Classifier trained successfully.\n")
     return model
@@ -90,9 +90,17 @@ def evaluate_model(model, X_test, y_test):
     print(f"F1 Score:  {f1_score(y_test, y_pred, average='weighted'):.4f}")
     
     cm = confusion_matrix(y_test, y_pred)
+    tn, fp, fn, tp = cm.ravel()
+    
+    print(f"\nFalse Positives (FP): {fp}")
+    print("Note: A False Positive is a 'False Alarm'—normal traffic incorrectly flagged as an attack. This can lead to 'alert fatigue' for security analysts.")
+    
+    print(f"False Negatives (FN): {fn}")
+    print("Note: A False Negative is a 'Missed Attack'—malicious traffic incorrectly labeled as normal. This is the most dangerous outcome in security as it allows a breach to go undetected.")
+    
     print("\nConfusion Matrix:")
-    print(f"TN: {cm[0,0]} | FP: {cm[0,1]}")
-    print(f"FN: {cm[1,0]} | TP: {cm[1,1]}")
+    print(f"TN: {tn} | FP: {fp}")
+    print(f"FN: {fn} | TP: {tp}")
     print("\n")
 
 def plot_confusion_matrix(model, X_test, y_test):
