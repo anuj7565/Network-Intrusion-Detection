@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 def encode_features(df):
     """
@@ -33,6 +33,54 @@ def encode_features(df):
         print(f"Unique values after encoding for '{col}':\n{df[col].unique()}\n")
         
     return df
+
+def scale_features(df):
+    """
+    Scales numerical features using StandardScaler.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+        tuple: A tuple containing:
+            - pd.DataFrame: The DataFrame with numerical features scaled.
+            - sklearn.preprocessing.StandardScaler: The fitted StandardScaler object.
+    """
+    # StandardScaler transforms features to have a mean of 0 and a standard deviation of 1.
+    # Mathematically, for each feature x, the scaled value x_scaled is calculated as:
+    # x_scaled = (x - mean(x)) / std(x)
+    # This process is crucial for many machine learning algorithms (e.g., K-Means, SVMs, Neural Networks)
+    # because they are sensitive to the scale of input features. Features with larger ranges
+    # can dominate the distance calculations or weight updates, leading to suboptimal model performance.
+    # Scaling ensures that all features contribute equally to the model's learning process.
+    print("--- Scaling numerical features using StandardScaler ---")
+    
+    # Separate the target variable 'attack' if it exists, otherwise get all numeric columns
+    numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+    if 'attack' in numeric_cols:
+        numeric_cols.remove('attack')
+    
+    # Print mean and standard deviation of 'src_bytes' before scaling
+    print(f"Before scaling 'src_bytes': Mean = {df['src_bytes'].mean():.2f}, Std Dev = {df['src_bytes'].std():.2f}")
+
+    # Initialize StandardScaler
+    scaler = StandardScaler()
+
+    # Apply StandardScaler to the identified numerical columns
+    df_scaled_features = pd.DataFrame(scaler.fit_transform(df[numeric_cols]), 
+                                      columns=numeric_cols, 
+                                      index=df.index)
+
+    # Combine scaled features with the 'attack' column (if it existed) and non-numeric columns
+    df_scaled = df_scaled_features
+    if 'attack' in df.columns:
+        df_scaled['attack'] = df['attack']
+    
+    # Print mean and standard deviation of 'src_bytes' after scaling
+    print(f"After scaling 'src_bytes': Mean = {df_scaled['src_bytes'].mean():.2f}, Std Dev = {df_scaled['src_bytes'].std():.2f}")
+    print("\n")
+
+    return df_scaled, scaler
 
 def simplify_labels(df):
     """
