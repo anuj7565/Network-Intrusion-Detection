@@ -1,7 +1,9 @@
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def train_decision_tree(X_train, y_train):
     """
@@ -24,6 +26,45 @@ def train_decision_tree(X_train, y_train):
     model = DecisionTreeClassifier(max_depth=10, random_state=42)
     model.fit(X_train, y_train)
     print("Decision Tree Classifier trained successfully.\n")
+    return model
+
+def train_random_forest(X_train, y_train):
+    """
+    Trains a Random Forest Classifier model.
+
+    Args:
+        X_train (pd.DataFrame): Training features.
+        y_train (pd.Series): Training target variable.
+
+    Returns:
+        sklearn.ensemble.RandomForestClassifier: The trained Random Forest model.
+    """
+    # n_estimators defines the number of trees in the forest. Increasing this 
+    # generally improves performance and stability but increases computation time.
+    # Random Forest is typically more accurate than a single Decision Tree because 
+    # it uses an ensemble approach (bagging), which reduces variance and helps 
+    # prevent overfitting by averaging the predictions of multiple diverse trees.
+    print("--- Training Random Forest Classifier ---")
+    model = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
+    model.fit(X_train, y_train)
+    print("Random Forest Classifier trained successfully.\n")
+    
+    # Evaluate the model
+    evaluate_model(model, X_train, y_train)
+    
+    # Plot feature importance
+    importances = model.feature_importances_
+    feature_names = X_train.columns
+    feature_imp_df = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+    feature_imp_df = feature_imp_df.sort_values(by='Importance', ascending=False).head(15)
+    
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Importance', y='Feature', data=feature_imp_df)
+    plt.title('Top 15 Feature Importances')
+    plt.tight_layout()
+    plt.savefig('feature_importance.png')
+    plt.close()
+    
     return model
 
 def evaluate_model(model, X_test, y_test):
