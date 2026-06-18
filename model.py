@@ -1,4 +1,5 @@
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 def train_decision_tree(X_train, y_train):
     """
@@ -22,3 +23,33 @@ def train_decision_tree(X_train, y_train):
     model.fit(X_train, y_train)
     print("Decision Tree Classifier trained successfully.\n")
     return model
+
+def evaluate_model(model, X_test, y_test):
+    """
+    Evaluates the model performance using classification metrics.
+
+    Metrics in the context of Intrusion Detection:
+    - Accuracy: Overall percentage of correctly classified traffic (normal vs attack).
+    - Precision: Of all traffic flagged as an attack, how many were actually attacks? 
+      High precision reduces false alarms.
+    - Recall (Sensitivity): Of all actual attacks, how many did we catch? 
+      Crucial for security: A False Negative (missing an attack) means a security 
+      breach goes undetected, which is often the most dangerous outcome.
+    - F1 Score: The harmonic mean of Precision and Recall, providing a balance 
+      between the two.
+    - Confusion Matrix: Shows TP (True Positives), TN (True Negatives), 
+      FP (False Positives), and FN (False Negatives).
+    """
+    y_pred = model.predict(X_test)
+    
+    print("--- Model Evaluation ---")
+    print(f"Accuracy:  {accuracy_score(y_test, y_pred):.4f}")
+    print(f"Precision: {precision_score(y_test, y_pred, average='weighted'):.4f}")
+    print(f"Recall:    {recall_score(y_test, y_pred, average='weighted'):.4f}")
+    print(f"F1 Score:  {f1_score(y_test, y_pred, average='weighted'):.4f}")
+    
+    cm = confusion_matrix(y_test, y_pred)
+    print("\nConfusion Matrix:")
+    print(f"TN: {cm[0,0]} | FP: {cm[0,1]}")
+    print(f"FN: {cm[1,0]} | TP: {cm[1,1]}")
+    print("\n")
