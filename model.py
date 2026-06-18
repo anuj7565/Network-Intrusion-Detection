@@ -1,5 +1,7 @@
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def train_decision_tree(X_train, y_train):
     """
@@ -53,3 +55,26 @@ def evaluate_model(model, X_test, y_test):
     print(f"TN: {cm[0,0]} | FP: {cm[0,1]}")
     print(f"FN: {cm[1,0]} | TP: {cm[1,1]}")
     print("\n")
+
+def plot_confusion_matrix(model, X_test, y_test):
+    """
+    Creates and saves a heatmap of the confusion matrix.
+
+    How to read a confusion matrix:
+    - The rows represent the Actual classes (Normal vs Attack).
+    - The columns represent the Predicted classes (Normal vs Attack).
+    - Diagonal elements (top-left to bottom-right) represent correct predictions.
+    - Off-diagonal elements represent misclassifications (errors).
+    """
+    y_pred = model.predict(X_test)
+    cm = confusion_matrix(y_test, y_pred)
+    
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=['Normal', 'Attack'], 
+                yticklabels=['Normal', 'Attack'])
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Confusion Matrix')
+    plt.savefig('confusion_matrix.png')
+    plt.close()
