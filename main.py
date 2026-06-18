@@ -59,6 +59,7 @@ def run_pipeline():
     df = pd.read_csv(args.data)
     
     print("[2/6] Preprocessing data...")
+    # Correct order: simplify labels first, then encode features
     df = preprocessing.simplify_labels(df)
     df = preprocessing.encode_features(df)
     df, scaler = preprocessing.scale_features(df)

@@ -17,21 +17,23 @@ def encode_features(df):
     # and cannot directly process string-based categorical data.
     # 'protocol_type', 'service', and 'flag' are categorical as they represent distinct,
     # non-ordered categories (e.g., 'tcp', 'udp', 'http', 'ftp').
+    # We explicitly ensure 'label' is not included in this list.
     categorical_cols = ["protocol_type", "service", "flag"]
     
     # Initialize LabelEncoder
     le = LabelEncoder()
 
     for col in categorical_cols:
-        print(f"--- Encoding column: {col} ---")
-        # Print unique values before encoding
-        print(f"Unique values before encoding for '{col}':\n{df[col].unique()}\n")
+        if col in df.columns:
+            print(f"--- Encoding column: {col} ---")
+            # Print unique values before encoding
+            print(f"Unique values before encoding for '{col}':\n{df[col].unique()}\n")
 
-        # Apply Label Encoding
-        df[col] = le.fit_transform(df[col])
+            # Apply Label Encoding
+            df[col] = le.fit_transform(df[col])
 
-        # Print unique values after encoding
-        print(f"Unique values after encoding for '{col}':\n{df[col].unique()}\n")
+            # Print unique values after encoding
+            print(f"Unique values after encoding for '{col}':\n{df[col].unique()}\n")
         
     return df
 
@@ -133,6 +135,12 @@ def simplify_labels(df):
     Returns:
         pd.DataFrame: The DataFrame with the simplified 'attack' column and 'label' column dropped.
     """
+    # Debugging: Print columns to verify 'label' exists
+    print(f"--- Simplifying labels. Current columns: {df.columns.tolist()} ---")
+    
+    if 'label' not in df.columns:
+        raise KeyError("The 'label' column is missing from the DataFrame. Ensure simplify_labels is called before dropping it.")
+
     # Simplifying the labels to binary classification (normal vs. attack) is often
     # a first step in intrusion detection systems. It reduces the complexity of the
     # classification problem from multi-class to binary, which can make initial
