@@ -124,4 +124,5 @@ def plot_confusion_matrix(model, X_test, y_test):
     plt.ylabel('Actual')
     plt.title('Confusion Matrix')
     plt.savefig('confusion_matrix.png')
+    print("Confusion matrix saved to confusion_matrix.png")
     plt.close()
