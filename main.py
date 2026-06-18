@@ -1,8 +1,62 @@
 import pandas as pd
-from sklearn.metrics import recall_score
+from sklearn.metrics import recall_score, accuracy_score, precision_score, f1_score
 import preprocessing
 import model
 import clustering
+import datetime
+
+def generate_report(df, dt_model, rf_model, X_test, y_test):
+    """
+    Generates a text report summarizing the model performance and dataset statistics.
+
+    Documentation is critical in security tools because it provides an audit trail 
+    of how decisions were made, ensures reproducibility of results, and allows 
+    security analysts to understand the model's limitations and performance 
+    characteristics when investigating potential breaches.
+    """
+    print("--- Generating report.txt ---")
+    
+    # Calculate metrics
+    dt_pred = dt_model.predict(X_test)
+    rf_pred = rf_model.predict(X_test)
+    
+    total_records = len(df)
+    attack_pct = (df['attack'].sum() / total_records) * 100
+    
+    # Get top 5 features
+    importances = rf_model.feature_importances_
+    feature_names = X_test.columns
+    feature_imp_df = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+    top_5 = feature_imp_df.sort_values(by='Importance', ascending=False).head(5)
+    
+    with open('report.txt', 'w') as f:
+        f.write(f"Intrusion Detection System Report\n")
+        f.write(f"Generated on: {datetime.datetime.now()}\n\n")
+        f.write(f"Dataset Statistics:\n")
+        f.write(f"- Total Records: {total_records}\n")
+        f.write(f"- Attack Percentage: {attack_pct:.2f}%\n\n")
+        
+        f.write("Decision Tree Results:\n")
+        f.write(f"- Accuracy: {accuracy_score(y_test, dt_pred):.4f}\n")
+        f.write(f"- Precision: {precision_score(y_test, dt_pred, average='weighted'):.4f}\n")
+        f.write(f"- Recall: {recall_score(y_test, dt_pred, average='weighted'):.4f}\n")
+        f.write(f"- F1 Score: {f1_score(y_test, dt_pred, average='weighted'):.4f}\n\n")
+        
+        f.write("Random Forest Results:\n")
+        f.write(f"- Accuracy: {accuracy_score(y_test, rf_pred):.4f}\n")
+        f.write(f"- Precision: {precision_score(y_test, rf_pred, average='weighted'):.4f}\n")
+        f.write(f"- Recall: {recall_score(y_test, rf_pred, average='weighted'):.4f}\n")
+        f.write(f"- F1 Score: {f1_score(y_test, rf_pred, average='weighted'):.4f}\n\n")
+        
+        f.write("Top 5 Important Features (Random Forest):\n")
+        for _, row in top_5.iterrows():
+            f.write(f"- {row['Feature']}: {row['Importance']:.4f}\n")
+            
+        f.write("\nConclusion:\n")
+        if rf_model.score(X_test, y_test) > dt_model.score(X_test, y_test):
+            f.write("The Random Forest model outperformed the Decision Tree, likely due to its ensemble nature reducing variance.")
+        else:
+            f.write("The Decision Tree performed comparably to the Random Forest.")
 
 def run_pipeline():
     # Printing progress updates is crucial in a data pipeline because these 
@@ -14,7 +68,6 @@ def run_pipeline():
     print("||||||||| Intrusion Detection System |||||||||")
     
     # [1/6] Loading dataset
-    # Assuming a CSV file named 'network_data.csv' exists
     print("[1/6] Loading dataset...")
     df = pd.read_csv('network_data.csv')
     
@@ -41,10 +94,12 @@ def run_pipeline():
     
     # [6/6] Generating report
     print("[6/6] Generating report...")
+    generate_report(df, dt_model, rf_model, X_test, y_test)
+    
     print("\n--- Final Summary ---")
     print(f"Decision Tree Recall: {dt_recall:.4f}")
     print(f"Random Forest Recall: {rf_recall:.4f}")
-    print("Pipeline complete. Check generated images for visualizations.")
+    print("Pipeline complete. Check generated images and report.txt for details.")
 
 if __name__ == "__main__":
     run_pipeline()
