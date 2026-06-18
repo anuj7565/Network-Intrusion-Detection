@@ -83,10 +83,14 @@ def run_pipeline():
     if args.model in ['dt', 'both']:
         print("[3/6] Training Decision Tree...")
         dt_model = model.train_decision_tree(X_train, y_train)
+        model.evaluate_model(dt_model, X_test, y_test)
+        model.plot_confusion_matrix(dt_model, X_test, y_test)
     
     if args.model in ['rf', 'both']:
         print("[4/6] Training Random Forest...")
         rf_model = model.train_random_forest(X_train, y_train)
+        model.evaluate_model(rf_model, X_test, y_test)
+        model.plot_confusion_matrix(rf_model, X_test, y_test)
     
     print("[5/6] Running anomaly detection...")
     clustering.detect_anomalies(X_train, y_train)
