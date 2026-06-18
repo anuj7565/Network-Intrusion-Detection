@@ -33,3 +33,33 @@ def encode_features(df):
         print(f"Unique values after encoding for '{col}':\n{df[col].unique()}\n")
         
     return df
+
+def simplify_labels(df):
+    """
+    Simplifies the 'label' column into a binary 'attack' column (0 for normal, 1 for attack).
+
+    Args:
+        df (pd.DataFrame): The input DataFrame with a 'label' column.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the simplified 'attack' column and 'label' column dropped.
+    """
+    # Simplifying the labels to binary classification (normal vs. attack) is often
+    # a first step in intrusion detection systems. It reduces the complexity of the
+    # classification problem from multi-class to binary, which can make initial
+    # model training and evaluation simpler and more interpretable.
+    # It also helps in identifying overall malicious activity before diving into
+    # specific attack types.
+    print("--- Simplifying labels to binary classification ---")
+    # Create a new column 'attack' where 'normal.' is 0 and all other labels are 1.
+    df['attack'] = df['label'].apply(lambda x: 0 if x == 'normal.' else 1)
+
+    # Print the counts of 0s and 1s in the new 'attack' column.
+    print("Count of 0s (normal) and 1s (attack) in 'attack' column:")
+    print(df['attack'].value_counts())
+    print("\n")
+
+    # Drop the original 'label' column as it's no longer needed after creating 'attack'.
+    df = df.drop('label', axis=1)
+    
+    return df
