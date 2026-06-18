@@ -22,7 +22,7 @@ def train_decision_tree(X_train, y_train):
     # capture more specific patterns in the training data, but it might fail
     # to generalize well to new, unseen data. Setting a maximum depth helps
     # to find a balance between bias and variance.
-    print("--- Training Decision Tree Classifier ---")
+    print("--- Training Decision Tree Classifier on X_train/y_train ---")
     model = DecisionTreeClassifier(max_depth=10, random_state=42)
     model.fit(X_train, y_train)
     print("Decision Tree Classifier trained successfully.\n")
@@ -44,13 +44,10 @@ def train_random_forest(X_train, y_train):
     # Random Forest is typically more accurate than a single Decision Tree because 
     # it uses an ensemble approach (bagging), which reduces variance and helps 
     # prevent overfitting by averaging the predictions of multiple diverse trees.
-    print("--- Training Random Forest Classifier ---")
+    print("--- Training Random Forest Classifier on X_train/y_train ---")
     model = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
     model.fit(X_train, y_train)
     print("Random Forest Classifier trained successfully.\n")
-    
-    # Evaluate the model
-    evaluate_model(model, X_train, y_train)
     
     # Plot feature importance
     importances = model.feature_importances_
@@ -69,7 +66,7 @@ def train_random_forest(X_train, y_train):
 
 def evaluate_model(model, X_test, y_test):
     """
-    Evaluates the model performance using classification metrics.
+    Evaluates the model performance using classification metrics on the test set.
 
     Metrics in the context of Intrusion Detection:
     - Accuracy: Overall percentage of correctly classified traffic (normal vs attack).
@@ -83,6 +80,7 @@ def evaluate_model(model, X_test, y_test):
     - Confusion Matrix: Shows TP (True Positives), TN (True Negatives), 
       FP (False Positives), and FN (False Negatives).
     """
+    print("--- Evaluating model on X_test/y_test ---")
     y_pred = model.predict(X_test)
     
     print("--- Model Evaluation ---")
