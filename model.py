@@ -1,6 +1,6 @@
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_curve, auc
 from sklearn.model_selection import cross_val_score
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -91,6 +91,39 @@ def cross_validate_model(model, X, y, model_name):
         print(f"{metric.replace('_weighted', '').capitalize()}: {scores.mean():.4f} +/- {scores.std():.4f}")
     
     return results
+
+def plot_roc_curve(dt_model, rf_model, X_test, y_test):
+    """
+    Plots the ROC curves for both models.
+
+    AUC (Area Under the Curve) represents the model's ability to distinguish 
+    between classes. An AUC of 1.0 indicates perfect classification, while 
+    0.5 represents a model that performs no better than random guessing.
+
+    The diagonal dotted line represents the 'random classifier' baseline. 
+    Any model curve falling below this line is performing worse than random 
+    chance, while curves above it indicate predictive power.
+    """
+    plt.figure(figsize=(8, 6))
+    
+    for model, name in [(dt_model, "Decision Tree"), (rf_model, "Random Forest")]:
+        y_probs = model.predict_proba(X_test)[:, 1]
+        fpr, tpr, _ = roc_curve(y_test, y_probs)
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, label=f'{name} (AUC = {roc_auc:.3f})')
+    
+    plt.plot([0, 1], [0, 1], 'k--', label='Random Baseline')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve')
+    plt.legend(loc='lower right')
+    plt.savefig('roc_curve.png')
+    plt.close()
+    
+    # Return AUCs for reporting
+    dt_probs = dt_model.predict_proba(X_test)[:, 1]
+    rf_probs = rf_model.predict_proba(X_test)[:, 1]
+    return auc(roc_curve(y_test, dt_probs)[0], roc_curve(y_test, dt_probs)[1]), auc(roc_curve(y_test, rf_probs)[0], roc_curve(y_test, rf_probs)[1])
 
 def evaluate_model(model, X_test, y_test):
     """
