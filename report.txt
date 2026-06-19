@@ -1,0 +1,19 @@
+Intrusion Detection System Report
+Generated on: 2026-06-19 14:43:19.017006
+
+Dataset Statistics:
+- Total Records: 494021
+- Attack Percentage: 80.31%
+
+Decision Tree Results:
+- Accuracy: 0.9977
+- Precision: 0.9977
+- Recall: 0.9977
+- F1 Score: 0.9977
+
+Random Forest Results:
+- Accuracy: 0.9996
+- Precision: 0.9996
+- Recall: 0.9996
+- F1 Score: 0.9996
+
