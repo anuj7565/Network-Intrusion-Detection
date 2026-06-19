@@ -20,8 +20,24 @@ We employ a hybrid approach to maximize detection capabilities:
 
 | Model | Accuracy | Precision | Recall | F1 Score |
 | :--- | :--- | :--- | :--- | :--- |
-| Decision Tree | - | - | - | - |
-| Random Forest | - | - | - | - |
+| Decision Tree | 0.9977 | 0.9977 | 0.9977 | 0.9977 |
+| Random Forest | 0.9996 | 0.9996 | 0.9996 | 0.9996 |
+
+## Model Evaluation
+
+### Cross Validation
+| Model | Mean Accuracy | Std Deviation |
+| :--- | :--- | :--- |
+| Decision Tree | 0.9883 | ± 0.0187 |
+| Random Forest | 0.9969 | ± 0.0059 |
+
+Random Forest is ~3x more stable than Decision Tree (lower variance).
+
+### ROC Curve
+Both models achieved **AUC = 1.000**, indicating near-perfect class separation.
+
+![ROC Curve](roc_curve.png)
+
 
 ## How to Run
 1. **Install Dependencies:**
