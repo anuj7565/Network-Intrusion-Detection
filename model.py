@@ -1,9 +1,11 @@
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.model_selection import cross_val_score
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 def train_decision_tree(X_train, y_train):
     """
@@ -63,6 +65,32 @@ def train_random_forest(X_train, y_train):
     plt.close()
     
     return model
+
+def cross_validate_model(model, X, y, model_name):
+    """
+    Performs k-fold cross-validation to assess model stability.
+
+    Cross-validation involves splitting the dataset into 'k' subsets (folds). 
+    The model is trained on k-1 folds and validated on the remaining fold, 
+    repeating this process until every fold has been used as a test set. 
+    This provides a more robust estimate of model performance than a single 
+    train-test split.
+
+    The standard deviation of the scores is critical for reliability: a low 
+    standard deviation indicates that the model's performance is consistent 
+    across different subsets of data, whereas a high standard deviation 
+    suggests the model is sensitive to the specific data it is trained on.
+    """
+    print(f"--- Cross-Validating {model_name} ---")
+    results = {}
+    metrics = ['accuracy', 'precision_weighted', 'recall_weighted', 'f1_weighted']
+    
+    for metric in metrics:
+        scores = cross_val_score(model, X, y, cv=5, scoring=metric)
+        results[metric] = scores
+        print(f"{metric.replace('_weighted', '').capitalize()}: {scores.mean():.4f} +/- {scores.std():.4f}")
+    
+    return results
 
 def evaluate_model(model, X_test, y_test):
     """

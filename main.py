@@ -6,7 +6,7 @@ import model
 import clustering
 import datetime
 
-def generate_report(df, dt_model, rf_model, X_test, y_test):
+def generate_report(df, dt_model, rf_model, X_test, y_test, X, y, cv_dt, cv_rf):
     """
     Generates a text report summarizing the model performance and dataset statistics.
 
@@ -30,7 +30,11 @@ def generate_report(df, dt_model, rf_model, X_test, y_test):
             f.write(f"- Accuracy: {accuracy_score(y_test, dt_pred):.4f}\n")
             f.write(f"- Precision: {precision_score(y_test, dt_pred, average='weighted'):.4f}\n")
             f.write(f"- Recall: {recall_score(y_test, dt_pred, average='weighted'):.4f}\n")
-            f.write(f"- F1 Score: {f1_score(y_test, dt_pred, average='weighted'):.4f}\n\n")
+            f.write(f"- F1 Score: {f1_score(y_test, dt_pred, average='weighted'):.4f}\n")
+            f.write("Cross-Validation Results:\n")
+            for m in ['accuracy', 'precision_weighted', 'recall_weighted', 'f1_weighted']:
+                f.write(f"- {m.replace('_weighted', '').capitalize()}: {cv_dt[m].mean():.4f} +/- {cv_dt[m].std():.4f}\n")
+            f.write("\n")
         
         if rf_model:
             rf_pred = rf_model.predict(X_test)
@@ -38,7 +42,11 @@ def generate_report(df, dt_model, rf_model, X_test, y_test):
             f.write(f"- Accuracy: {accuracy_score(y_test, rf_pred):.4f}\n")
             f.write(f"- Precision: {precision_score(y_test, rf_pred, average='weighted'):.4f}\n")
             f.write(f"- Recall: {recall_score(y_test, rf_pred, average='weighted'):.4f}\n")
-            f.write(f"- F1 Score: {f1_score(y_test, rf_pred, average='weighted'):.4f}\n\n")
+            f.write(f"- F1 Score: {f1_score(y_test, rf_pred, average='weighted'):.4f}\n")
+            f.write("Cross-Validation Results:\n")
+            for m in ['accuracy', 'precision_weighted', 'recall_weighted', 'f1_weighted']:
+                f.write(f"- {m.replace('_weighted', '').capitalize()}: {cv_rf[m].mean():.4f} +/- {cv_rf[m].std():.4f}\n")
+            f.write("\n")
 
 def run_pipeline():
     # argparse is a standard Python library used to parse command-line arguments.
@@ -75,20 +83,27 @@ def run_pipeline():
     df = preprocessing.simplify_labels(df)
     df = preprocessing.encode_features(df)
     df, scaler = preprocessing.scale_features(df)
+    
+    X = df.drop('attack', axis=1)
+    y = df['attack']
     X_train, X_test, y_train, y_test = preprocessing.split_data(df)
     
     dt_model = None
     rf_model = None
+    cv_dt = None
+    cv_rf = None
     
     if args.model in ['dt', 'both']:
         print("[3/6] Training Decision Tree...")
         dt_model = model.train_decision_tree(X_train, y_train)
+        cv_dt = model.cross_validate_model(dt_model, X, y, "Decision Tree")
         model.evaluate_model(dt_model, X_test, y_test)
         model.plot_confusion_matrix(dt_model, X_test, y_test)
     
     if args.model in ['rf', 'both']:
         print("[4/6] Training Random Forest...")
         rf_model = model.train_random_forest(X_train, y_train)
+        cv_rf = model.cross_validate_model(rf_model, X, y, "Random Forest")
         model.evaluate_model(rf_model, X_test, y_test)
         model.plot_confusion_matrix(rf_model, X_test, y_test)
     
@@ -97,7 +112,7 @@ def run_pipeline():
     
     if args.report:
         print("[6/6] Generating report...")
-        generate_report(df, dt_model, rf_model, X_test, y_test)
+        generate_report(df, dt_model, rf_model, X_test, y_test, X, y, cv_dt, cv_rf)
     
     print("Pipeline complete.")
 
