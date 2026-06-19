@@ -6,7 +6,7 @@ import model
 import clustering
 import datetime
 
-def generate_report(df, dt_model, rf_model, X_test, y_test, X, y, cv_dt, cv_rf):
+def generate_report(df, dt_model, rf_model, X_test, y_test, X, y, cv_dt, cv_rf, auc_dt, auc_rf):
     """
     Generates a text report summarizing the model performance and dataset statistics.
 
@@ -31,6 +31,7 @@ def generate_report(df, dt_model, rf_model, X_test, y_test, X, y, cv_dt, cv_rf):
             f.write(f"- Precision: {precision_score(y_test, dt_pred, average='weighted'):.4f}\n")
             f.write(f"- Recall: {recall_score(y_test, dt_pred, average='weighted'):.4f}\n")
             f.write(f"- F1 Score: {f1_score(y_test, dt_pred, average='weighted'):.4f}\n")
+            f.write(f"- AUC: {auc_dt:.4f}\n")
             f.write("Cross-Validation Results:\n")
             for m in ['accuracy', 'precision_weighted', 'recall_weighted', 'f1_weighted']:
                 f.write(f"- {m.replace('_weighted', '').capitalize()}: {cv_dt[m].mean():.4f} +/- {cv_dt[m].std():.4f}\n")
@@ -43,6 +44,7 @@ def generate_report(df, dt_model, rf_model, X_test, y_test, X, y, cv_dt, cv_rf):
             f.write(f"- Precision: {precision_score(y_test, rf_pred, average='weighted'):.4f}\n")
             f.write(f"- Recall: {recall_score(y_test, rf_pred, average='weighted'):.4f}\n")
             f.write(f"- F1 Score: {f1_score(y_test, rf_pred, average='weighted'):.4f}\n")
+            f.write(f"- AUC: {auc_rf:.4f}\n")
             f.write("Cross-Validation Results:\n")
             for m in ['accuracy', 'precision_weighted', 'recall_weighted', 'f1_weighted']:
                 f.write(f"- {m.replace('_weighted', '').capitalize()}: {cv_rf[m].mean():.4f} +/- {cv_rf[m].std():.4f}\n")
@@ -92,6 +94,8 @@ def run_pipeline():
     rf_model = None
     cv_dt = None
     cv_rf = None
+    auc_dt = 0
+    auc_rf = 0
     
     if args.model in ['dt', 'both']:
         print("[3/6] Training Decision Tree...")
@@ -107,12 +111,16 @@ def run_pipeline():
         model.evaluate_model(rf_model, X_test, y_test)
         model.plot_confusion_matrix(rf_model, X_test, y_test)
     
+    if dt_model and rf_model:
+        print("[4.5/6] Plotting ROC curves...")
+        auc_dt, auc_rf = model.plot_roc_curve(dt_model, rf_model, X_test, y_test)
+    
     print("[5/6] Running anomaly detection...")
     clustering.detect_anomalies(X_train, y_train)
     
     if args.report:
         print("[6/6] Generating report...")
-        generate_report(df, dt_model, rf_model, X_test, y_test, X, y, cv_dt, cv_rf)
+        generate_report(df, dt_model, rf_model, X_test, y_test, X, y, cv_dt, cv_rf, auc_dt, auc_rf)
     
     print("Pipeline complete.")
 
