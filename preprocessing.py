@@ -11,36 +11,25 @@ from sklearn.model_selection import train_test_split
 
 def encode_features(df):
     """Encodes categorical features in the DataFrame using LabelEncoder.
-
     Args:
-        df (pd.DataFrame): The input DataFrame.
+        df (pd.DataFrame): The input DataFrame containing categorical columns
+                          'protocol_type', 'service', and 'flag'.
 
     Returns:
-        pd.DataFrame: The DataFrame with specified categorical columns encoded.
+        pd.DataFrame: The DataFrame with the specified categorical columns encoded
+                      into numerical format.
     """
-    # Encoding converts categorical labels into numerical format.
-    # This is necessary because most machine learning algorithms require numerical input
-    # and cannot directly process string-based categorical data.
-    # 'protocol_type', 'service', and 'flag' are categorical as they represent distinct,
-    # non-ordered categories (e.g., 'tcp', 'udp', 'http', 'ftp').
-    # We explicitly ensure 'label' is not included in this list.
     categorical_cols = ["protocol_type", "service", "flag"]
-    
-    # Initialize LabelEncoder
+
     le = LabelEncoder()
 
     for col in categorical_cols:
         if col in df.columns:
             print(f"--- Encoding column: {col} ---")
-            # Print unique values before encoding
             print(f"Unique values before encoding for '{col}':\n{df[col].unique()}\n")
-
-            # Apply Label Encoding
             df[col] = le.fit_transform(df[col])
-
-            # Print unique values after encoding
             print(f"Unique values after encoding for '{col}':\n{df[col].unique()}\n")
-        
+
     return df
 
 def split_data(df):
