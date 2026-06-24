@@ -56,7 +56,6 @@ def extract_features(flow_key, packets):
             dst_bytes += len(p)
             
     # 4. Flags
-    flags = set()
     has_syn = False
     has_fin = False
     has_rst = False
@@ -68,9 +67,9 @@ def extract_features(flow_key, packets):
             if 'F' in f: has_fin = True
             if 'R' in f: has_rst = True
             
-    if has_syn and has_fin: flag = "SF"
+    if has_rst: flag = "REJ"
+    elif has_syn and has_fin: flag = "SF"
     elif has_syn and not has_fin: flag = "S0"
-    elif has_rst: flag = "REJ"
     else: flag = "OTH"
     
     return {
