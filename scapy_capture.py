@@ -37,14 +37,62 @@ def process_packet(packet):
         flows[key] = []
     flows[key].append(packet)
 
+def extract_features(flow_key, packets):
+    src_ip_key, src_port_key, dst_ip_key, dst_port_key, proto = flow_key
+    
+    # 1. Duration
+    duration = packets[-1].time - packets[0].time
+    
+    # 2. Protocol Type
+    proto_name = PROTOCOL_MAP.get(proto, str(proto))
+    
+    # 3. Bytes
+    src_bytes = 0
+    dst_bytes = 0
+    for p in packets:
+        if p[IP].src == src_ip_key:
+            src_bytes += len(p)
+        else:
+            dst_bytes += len(p)
+            
+    # 4. Flags
+    flags = set()
+    has_syn = False
+    has_fin = False
+    has_rst = False
+    
+    for p in packets:
+        if p.haslayer(TCP):
+            f = p[TCP].flags
+            if 'S' in f: has_syn = True
+            if 'F' in f: has_fin = True
+            if 'R' in f: has_rst = True
+            
+    if has_syn and has_fin: flag = "SF"
+    elif has_syn and not has_fin: flag = "S0"
+    elif has_rst: flag = "REJ"
+    else: flag = "OTH"
+    
+    return {
+        "duration": float(duration),
+        "protocol": proto_name,
+        "src_bytes": src_bytes,
+        "dst_bytes": dst_bytes,
+        "flag": flag
+    }
+
 if __name__ == "__main__":
     sniff(iface=INTERFACE, prn=process_packet, count=20)
     
-    print("\nFlow Summary:")
-    print("-" * 40)
+    print("\nFlow Summary and Features:")
+    print("-" * 60)
     for flow_key, packets in flows.items():
-        src_ip, src_port, dst_ip, dst_port, proto = flow_key
-        proto_name = PROTOCOL_MAP.get(proto, str(proto))
-        print(f"Flow: {src_ip}:{src_port} <-> {dst_ip}:{dst_port} ({proto_name})")
-        print(f"Packet count: {len(packets)}")
-        print("-" * 40)
+        features = extract_features(flow_key, packets)
+        src_ip, src_port, dst_ip, dst_port, _ = flow_key
+        
+        print(f"Flow: {src_ip}:{src_port} <-> {dst_ip}:{dst_port}")
+        print(f"  Duration: {features['duration']:.4f}s")
+        print(f"  Protocol: {features['protocol']}")
+        print(f"  Bytes: Src={features['src_bytes']}, Dst={features['dst_bytes']}")
+        print(f"  Flag: {features['flag']}")
+        print("-" * 60)
