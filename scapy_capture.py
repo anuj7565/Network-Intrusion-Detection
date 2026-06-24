@@ -81,7 +81,7 @@ def extract_features(flow_key, packets):
     }
 
 if __name__ == "__main__":
-    sniff(iface=INTERFACE, prn=process_packet, count=20)
+    sniff(iface=INTERFACE, prn=process_packet, count=100)
     
     print("\nFlow Summary and Features:")
     print("-" * 60)
