@@ -37,7 +37,7 @@ def process_packet(packet):
         flows[key] = []
     flows[key].append(packet)
 
-def extract_features(flow_key, packets):
+def extract_features(flow_key, packets, completed_flows):
     src_ip_key, src_port_key, dst_ip_key, dst_port_key, proto = flow_key
     
     # 1. Duration
@@ -71,22 +71,44 @@ def extract_features(flow_key, packets):
     elif has_syn and has_fin: flag = "SF"
     elif has_syn and not has_fin: flag = "S0"
     else: flag = "OTH"
+
+    # 5. Count-based features
+    last_time = packets[-1].time
+    relevant_flows = [f for f in completed_flows if abs(f['last_time'] - last_time) <= 2.0]
+    
+    same_ip_flows = [f for f in relevant_flows if f['dst_ip'] == dst_ip_key]
+    count = len(same_ip_flows)
+    
+    same_srv_count = sum(1 for f in same_ip_flows if f['dst_port'] == dst_port_key)
+    same_srv_rate = same_srv_count / count if count > 0 else 0.0
     
     return {
         "duration": float(duration),
         "protocol": proto_name,
         "src_bytes": src_bytes,
         "dst_bytes": dst_bytes,
-        "flag": flag
+        "flag": flag,
+        "count": count,
+        "same_srv_rate": same_srv_rate
     }
 
 if __name__ == "__main__":
     sniff(iface=INTERFACE, prn=process_packet, count=100)
     
+    # Build completed_flows list
+    completed_flows = []
+    for flow_key, packets in flows.items():
+        _, _, dst_ip, dst_port, _ = flow_key
+        completed_flows.append({
+            "dst_ip": dst_ip,
+            "dst_port": dst_port,
+            "last_time": packets[-1].time
+        })
+    
     print("\nFlow Summary and Features:")
     print("-" * 60)
     for flow_key, packets in flows.items():
-        features = extract_features(flow_key, packets)
+        features = extract_features(flow_key, packets, completed_flows)
         src_ip, src_port, dst_ip, dst_port, _ = flow_key
         
         print(f"Flow: {src_ip}:{src_port} <-> {dst_ip}:{dst_port}")
@@ -94,4 +116,5 @@ if __name__ == "__main__":
         print(f"  Protocol: {features['protocol']}")
         print(f"  Bytes: Src={features['src_bytes']}, Dst={features['dst_bytes']}")
         print(f"  Flag: {features['flag']}")
+        print(f"  Count: {features['count']}, Same Srv Rate: {features['same_srv_rate']:.2f}")
         print("-" * 60)
