@@ -81,6 +81,16 @@ def extract_features(flow_key, packets, completed_flows):
     
     same_srv_count = sum(1 for f in same_ip_flows if f['dst_port'] == dst_port_key)
     same_srv_rate = same_srv_count / count if count > 0 else 0.0
+
+    # 6. New Features
+    # land: 1 if src_ip == dst_ip and src_port == dst_port
+    land = 1 if (src_ip_key == dst_ip_key and src_port_key == dst_port_key) else 0
+    
+    # wrong_fragment: count packets with frag > 0
+    wrong_fragment = sum(1 for p in packets if p[IP].frag > 0)
+    
+    # urgent: count packets with TCP URG flag
+    urgent = sum(1 for p in packets if p.haslayer(TCP) and 'U' in p[TCP].flags)
     
     return {
         "duration": float(duration),
@@ -89,7 +99,10 @@ def extract_features(flow_key, packets, completed_flows):
         "dst_bytes": dst_bytes,
         "flag": flag,
         "count": count,
-        "same_srv_rate": same_srv_rate
+        "same_srv_rate": same_srv_rate,
+        "land": land,
+        "wrong_fragment": wrong_fragment,
+        "urgent": urgent
     }
 
 if __name__ == "__main__":
@@ -117,4 +130,5 @@ if __name__ == "__main__":
         print(f"  Bytes: Src={features['src_bytes']}, Dst={features['dst_bytes']}")
         print(f"  Flag: {features['flag']}")
         print(f"  Count: {features['count']}, Same Srv Rate: {features['same_srv_rate']:.2f}")
+        print(f"  Land: {features['land']}, Wrong Frag: {features['wrong_fragment']}, Urgent: {features['urgent']}")
         print("-" * 60)
