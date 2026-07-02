@@ -37,6 +37,23 @@ def process_packet(packet):
         flows[key] = []
     flows[key].append(packet)
 
+def get_flow_flag(packets):
+    has_syn = False
+    has_fin = False
+    has_rst = False
+    
+    for p in packets:
+        if p.haslayer(TCP):
+            f = p[TCP].flags
+            if 'S' in f: has_syn = True
+            if 'F' in f: has_fin = True
+            if 'R' in f: has_rst = True
+            
+    if has_rst: return "REJ"
+    elif has_syn and has_fin: return "SF"
+    elif has_syn and not has_fin: return "S0"
+    else: return "OTH"
+
 def extract_features(flow_key, packets, completed_flows):
     src_ip_key, src_port_key, dst_ip_key, dst_port_key, proto = flow_key
     
@@ -56,21 +73,7 @@ def extract_features(flow_key, packets, completed_flows):
             dst_bytes += len(p)
             
     # 4. Flags
-    has_syn = False
-    has_fin = False
-    has_rst = False
-    
-    for p in packets:
-        if p.haslayer(TCP):
-            f = p[TCP].flags
-            if 'S' in f: has_syn = True
-            if 'F' in f: has_fin = True
-            if 'R' in f: has_rst = True
-            
-    if has_rst: flag = "REJ"
-    elif has_syn and has_fin: flag = "SF"
-    elif has_syn and not has_fin: flag = "S0"
-    else: flag = "OTH"
+    flag = get_flow_flag(packets)
 
     # 5. Count-based features
     last_time = packets[-1].time
@@ -81,15 +84,15 @@ def extract_features(flow_key, packets, completed_flows):
     
     same_srv_count = sum(1 for f in same_ip_flows if f['dst_port'] == dst_port_key)
     same_srv_rate = same_srv_count / count if count > 0 else 0.0
+    
+    # Rate-based features
+    serror_rate = sum(1 for f in same_ip_flows if f['flag'] == 'S0') / count if count > 0 else 0.0
+    rerror_rate = sum(1 for f in same_ip_flows if f['flag'] == 'REJ') / count if count > 0 else 0.0
+    diff_srv_rate = sum(1 for f in same_ip_flows if f['dst_port'] != dst_port_key) / count if count > 0 else 0.0
 
     # 6. New Features
-    # land: 1 if src_ip == dst_ip and src_port == dst_port
     land = 1 if (src_ip_key == dst_ip_key and src_port_key == dst_port_key) else 0
-    
-    # wrong_fragment: count packets with frag > 0
     wrong_fragment = sum(1 for p in packets if p[IP].frag > 0)
-    
-    # urgent: count packets with TCP URG flag
     urgent = sum(1 for p in packets if p.haslayer(TCP) and 'U' in p[TCP].flags)
     
     return {
@@ -100,6 +103,9 @@ def extract_features(flow_key, packets, completed_flows):
         "flag": flag,
         "count": count,
         "same_srv_rate": same_srv_rate,
+        "serror_rate": serror_rate,
+        "rerror_rate": rerror_rate,
+        "diff_srv_rate": diff_srv_rate,
         "land": land,
         "wrong_fragment": wrong_fragment,
         "urgent": urgent
@@ -115,7 +121,8 @@ if __name__ == "__main__":
         completed_flows.append({
             "dst_ip": dst_ip,
             "dst_port": dst_port,
-            "last_time": packets[-1].time
+            "last_time": packets[-1].time,
+            "flag": get_flow_flag(packets)
         })
     
     print("\nFlow Summary and Features:")
@@ -130,5 +137,6 @@ if __name__ == "__main__":
         print(f"  Bytes: Src={features['src_bytes']}, Dst={features['dst_bytes']}")
         print(f"  Flag: {features['flag']}")
         print(f"  Count: {features['count']}, Same Srv Rate: {features['same_srv_rate']:.2f}")
+        print(f"  Rates: SError={features['serror_rate']:.2f}, RError={features['rerror_rate']:.2f}, DiffSrv={features['diff_srv_rate']:.2f}")
         print(f"  Land: {features['land']}, Wrong Frag: {features['wrong_fragment']}, Urgent: {features['urgent']}")
         print("-" * 60)
