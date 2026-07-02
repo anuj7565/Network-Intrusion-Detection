@@ -3,6 +3,11 @@ from scapy.all import sniff, IP, TCP, UDP
 # Configuration
 INTERFACE = "eth0"
 PROTOCOL_MAP = {6: "TCP", 17: "UDP", 1: "ICMP"}
+SERVICE_MAP = {
+    80: "http", 443: "http_443", 22: "ssh", 21: "ftp", 23: "telnet", 
+    25: "smtp", 53: "domain_u", 110: "pop_3", 143: "imap4", 
+    123: "ntp_u", 67: "domain_u", 68: "domain_u"
+}
 flows = {}
 
 def process_packet(packet):
@@ -63,7 +68,10 @@ def extract_features(flow_key, packets, completed_flows):
     # 2. Protocol Type
     proto_name = PROTOCOL_MAP.get(proto, str(proto))
     
-    # 3. Bytes
+    # 3. Service
+    service = SERVICE_MAP.get(dst_port_key, "other")
+    
+    # 4. Bytes
     src_bytes = 0
     dst_bytes = 0
     for p in packets:
@@ -72,10 +80,10 @@ def extract_features(flow_key, packets, completed_flows):
         else:
             dst_bytes += len(p)
             
-    # 4. Flags
+    # 5. Flags
     flag = get_flow_flag(packets)
 
-    # 5. Count-based features
+    # 6. Count-based features
     last_time = packets[-1].time
     relevant_flows = [f for f in completed_flows if abs(f['last_time'] - last_time) <= 2.0]
     
@@ -90,7 +98,7 @@ def extract_features(flow_key, packets, completed_flows):
     rerror_rate = sum(1 for f in same_ip_flows if f['flag'] == 'REJ') / count if count > 0 else 0.0
     diff_srv_rate = sum(1 for f in same_ip_flows if f['dst_port'] != dst_port_key) / count if count > 0 else 0.0
 
-    # 6. New Features
+    # 7. New Features
     land = 1 if (src_ip_key == dst_ip_key and src_port_key == dst_port_key) else 0
     wrong_fragment = sum(1 for p in packets if p[IP].frag > 0)
     urgent = sum(1 for p in packets if p.haslayer(TCP) and 'U' in p[TCP].flags)
@@ -98,6 +106,7 @@ def extract_features(flow_key, packets, completed_flows):
     return {
         "duration": float(duration),
         "protocol": proto_name,
+        "service": service,
         "src_bytes": src_bytes,
         "dst_bytes": dst_bytes,
         "flag": flag,
@@ -160,7 +169,7 @@ if __name__ == "__main__":
         
         print(f"Flow: {src_ip}:{src_port} <-> {dst_ip}:{dst_port}")
         print(f"  Duration: {features['duration']:.4f}s")
-        print(f"  Protocol: {features['protocol']}")
+        print(f"  Protocol: {features['protocol']}, Service: {features['service']}")
         print(f"  Bytes: Src={features['src_bytes']}, Dst={features['dst_bytes']}")
         print(f"  Flag: {features['flag']}")
         print(f"  Count: {features['count']}, Same Srv Rate: {features['same_srv_rate']:.2f}")
