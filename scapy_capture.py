@@ -69,7 +69,7 @@ def extract_features(flow_key, packets, completed_flows):
     proto_name = PROTOCOL_MAP.get(proto, str(proto))
     
     # 3. Service
-    service = SERVICE_MAP.get(dst_port_key, "other")
+    service = SERVICE_MAP.get(dst_port_key, SERVICE_MAP.get(src_port_key, "other"))
     
     # 4. Bytes
     src_bytes = 0
