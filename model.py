@@ -6,6 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import joblib
 
 def train_decision_tree(X_train, y_train):
     """
@@ -50,6 +51,8 @@ def train_random_forest(X_train, y_train):
     model = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
     model.fit(X_train, y_train)
     print("Random Forest Classifier trained successfully.\n")
+    joblib.dump(model, 'rf_model.pkl')
+    print("Saved trained model to rf_model.pkl")
     
     # Plot feature importance
     importances = model.feature_importances_
