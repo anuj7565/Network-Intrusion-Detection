@@ -63,7 +63,7 @@ def split_data(df):
 
     return X_train, X_test, y_train, y_test
 
-def scale_features(df):
+def scale_features(df, encoders):
     """Scales numerical features using StandardScaler.
 
     StandardScaler transforms features to have a mean of 0 and a standard deviation of 1.
@@ -71,6 +71,7 @@ def scale_features(df):
 
     Args:
         df (pd.DataFrame): The input DataFrame.
+        encoders (dict): The dictionary of fitted LabelEncoders.
 
     Returns:
         tuple: A tuple containing:
