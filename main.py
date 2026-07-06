@@ -83,8 +83,8 @@ def run_pipeline():
     print("[2/6] Preprocessing data...")
     # Correct order: simplify labels first, then encode features
     df = preprocessing.simplify_labels(df)
-    df = preprocessing.encode_features(df)
-    df, scaler = preprocessing.scale_features(df)
+    df, encoders = preprocessing.encode_features(df)
+    df, scaler = preprocessing.scale_features(df, encoders)
     
     X = df.drop('attack', axis=1)
     y = df['attack']
