@@ -5,6 +5,7 @@ scaling numerical features, and simplifying target labels.
 """
 
 import pandas as pd
+import joblib
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 
@@ -20,17 +21,18 @@ def encode_features(df):
                       into numerical format.
     """
     categorical_cols = ["protocol_type", "service", "flag"]
-
-    le = LabelEncoder()
+    encoders = {}
 
     for col in categorical_cols:
         if col in df.columns:
             print(f"--- Encoding column: {col} ---")
             print(f"Unique values before encoding for '{col}':\n{df[col].unique()}\n")
+            le = LabelEncoder()
             df[col] = le.fit_transform(df[col])
+            encoders[col] = le
             print(f"Unique values after encoding for '{col}':\n{df[col].unique()}\n")
 
-    return df
+    return df, encoders
 
 def split_data(df):
     """Separates features (X) and target (y), then splits the data into
@@ -95,6 +97,13 @@ def scale_features(df):
 
     print(f"After scaling 'src_bytes': Mean = {df_scaled['src_bytes'].mean():.2f}, Std Dev = {df_scaled['src_bytes'].std():.2f}")
     print("\n")
+
+    # Save artifacts
+    feature_cols = [c for c in df_scaled.columns if c != 'attack']
+    joblib.dump(encoders, 'encoders.pkl')
+    joblib.dump(scaler, 'scaler.pkl')
+    joblib.dump(feature_cols, 'feature_columns.pkl')
+    print("Saved artifacts: encoders.pkl, scaler.pkl, feature_columns.pkl")
 
     return df_scaled, scaler
 
