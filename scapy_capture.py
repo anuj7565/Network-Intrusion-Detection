@@ -105,7 +105,7 @@ def extract_features(flow_key, packets, completed_flows):
     
     return {
         "duration": float(duration),
-        "protocol": proto_name,
+        "protocol_type": proto_name,
         "service": service,
         "src_bytes": src_bytes,
         "dst_bytes": dst_bytes,
@@ -169,7 +169,7 @@ if __name__ == "__main__":
         
         print(f"Flow: {src_ip}:{src_port} <-> {dst_ip}:{dst_port}")
         print(f"  Duration: {features['duration']:.4f}s")
-        print(f"  Protocol: {features['protocol']}, Service: {features['service']}")
+        print(f"  Protocol: {features['protocol_type']}, Service: {features['service']}")
         print(f"  Bytes: Src={features['src_bytes']}, Dst={features['dst_bytes']}")
         print(f"  Flag: {features['flag']}")
         print(f"  Count: {features['count']}, Same Srv Rate: {features['same_srv_rate']:.2f}")
