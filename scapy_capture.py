@@ -1,4 +1,6 @@
 from scapy.all import sniff, IP, TCP, UDP
+import joblib
+import numpy as np
 
 # Configuration
 INTERFACE = "eth0"
@@ -9,6 +11,11 @@ SERVICE_MAP = {
     123: "ntp_u", 67: "domain_u", 68: "domain_u"
 }
 flows = {}
+
+encoders = joblib.load('encoders.pkl')
+scaler = joblib.load('scaler.pkl')
+feature_columns = joblib.load('feature_columns.pkl')
+rf_model = joblib.load('rf_model.pkl')
 
 def process_packet(packet):
     if not packet.haslayer(IP):
@@ -147,6 +154,21 @@ def extract_features(flow_key, packets, completed_flows):
         "srv_diff_host_rate": 0
     }
 
+def predict_flow(features):
+    features_copy = features.copy()
+    for col in ["protocol_type", "service", "flag"]:
+        value = features_copy[col]
+        try:
+            features_copy[col] = encoders[col].transform([value])[0]
+        except ValueError:
+            print(f"Warning: unseen value '{value}' for column '{col}', defaulting to 0")
+            features_copy[col] = 0
+    
+    ordered_values = [features_copy[col] for col in feature_columns]
+    scaled_values = scaler.transform([ordered_values])
+    prediction = rf_model.predict(scaled_values)
+    return prediction[0]
+
 if __name__ == "__main__":
     sniff(iface=INTERFACE, prn=process_packet, count=100)
     
@@ -165,6 +187,7 @@ if __name__ == "__main__":
     print("-" * 60)
     for flow_key, packets in flows.items():
         features = extract_features(flow_key, packets, completed_flows)
+        prediction = predict_flow(features)
         src_ip, src_port, dst_ip, dst_port, _ = flow_key
         
         print(f"Flow: {src_ip}:{src_port} <-> {dst_ip}:{dst_port}")
@@ -175,4 +198,5 @@ if __name__ == "__main__":
         print(f"  Count: {features['count']}, Same Srv Rate: {features['same_srv_rate']:.2f}")
         print(f"  Rates: SError={features['serror_rate']:.2f}, RError={features['rerror_rate']:.2f}, DiffSrv={features['diff_srv_rate']:.2f}")
         print(f"  Land: {features['land']}, Wrong Frag: {features['wrong_fragment']}, Urgent: {features['urgent']}")
+        print(f"  Prediction: {'ATTACK' if prediction == 1 else 'NORMAL'}")
         print("-" * 60)
