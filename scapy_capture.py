@@ -168,7 +168,8 @@ def predict_flow(features):
     ordered_values = [features_copy[col] for col in feature_columns]
     ordered_df = pd.DataFrame([ordered_values], columns=feature_columns)
     scaled_values = scaler.transform(ordered_df)
-    prediction = rf_model.predict(scaled_values)
+    scaled_df = pd.DataFrame(scaled_values, columns=feature_columns)
+    prediction = rf_model.predict(scaled_df)
     return prediction[0]
 
 if __name__ == "__main__":
