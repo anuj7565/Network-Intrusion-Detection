@@ -4,7 +4,7 @@ import numpy as np
 
 # Configuration
 INTERFACE = "eth0"
-PROTOCOL_MAP = {6: "TCP", 17: "UDP", 1: "ICMP"}
+PROTOCOL_MAP = {6: "tcp", 17: "udp", 1: "icmp"}
 SERVICE_MAP = {
     80: "http", 443: "http_443", 22: "ssh", 21: "ftp", 23: "telnet", 
     25: "smtp", 53: "domain_u", 110: "pop_3", 143: "imap4", 
