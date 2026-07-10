@@ -1,6 +1,7 @@
 from scapy.all import sniff, IP, TCP, UDP
 import joblib
 import numpy as np
+import pandas as pd
 
 # Configuration
 INTERFACE = "eth0"
@@ -165,7 +166,8 @@ def predict_flow(features):
             features_copy[col] = 0
     
     ordered_values = [features_copy[col] for col in feature_columns]
-    scaled_values = scaler.transform([ordered_values])
+    ordered_df = pd.DataFrame([ordered_values], columns=feature_columns)
+    scaled_values = scaler.transform(ordered_df)
     prediction = rf_model.predict(scaled_values)
     return prediction[0]
 
