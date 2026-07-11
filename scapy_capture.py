@@ -173,7 +173,7 @@ def predict_flow(features):
     return prediction[0]
 
 if __name__ == "__main__":
-    sniff(iface=INTERFACE, prn=process_packet, count=100)
+    sniff(iface=INTERFACE, prn=process_packet, count=0, timeout=180)
     
     # Build completed_flows list
     completed_flows = []
