@@ -77,7 +77,8 @@ def extract_features(flow_key, packets, completed_flows):
     proto_name = PROTOCOL_MAP.get(proto, str(proto))
     
     # 3. Service
-    service = SERVICE_MAP.get(dst_port_key, SERVICE_MAP.get(src_port_key, "other"))
+    service_port = dst_port_key if dst_port_key in SERVICE_MAP else src_port_key
+    service = SERVICE_MAP.get(service_port, "other")
     
     # 4. Bytes
     src_bytes = 0
@@ -98,13 +99,13 @@ def extract_features(flow_key, packets, completed_flows):
     same_ip_flows = [f for f in relevant_flows if f['dst_ip'] == dst_ip_key]
     count = len(same_ip_flows)
     
-    same_srv_count = sum(1 for f in same_ip_flows if f['dst_port'] == dst_port_key)
+    same_srv_count = sum(1 for f in same_ip_flows if f['dst_port'] == service_port)
     same_srv_rate = same_srv_count / count if count > 0 else 0.0
     
     # Rate-based features
     serror_rate = sum(1 for f in same_ip_flows if f['flag'] == 'S0') / count if count > 0 else 0.0
     rerror_rate = sum(1 for f in same_ip_flows if f['flag'] == 'REJ') / count if count > 0 else 0.0
-    diff_srv_rate = sum(1 for f in same_ip_flows if f['dst_port'] != dst_port_key) / count if count > 0 else 0.0
+    diff_srv_rate = sum(1 for f in same_ip_flows if f['dst_port'] != service_port) / count if count > 0 else 0.0
 
     # 7. New Features
     land = 1 if (src_ip_key == dst_ip_key and src_port_key == dst_port_key) else 0
