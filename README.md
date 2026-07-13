@@ -50,6 +50,30 @@ Both models achieved **AUC = 1.000**, indicating near-perfect class separation.
    python main.py --data kddcup.data_10_percent.gz --model both --report
    ```
 
+## Live Attack Validation
+
+### Test Setup
+- Validation performed against a live Metasploitable VM (target) from a Kali Linux VM (attacker), using the scapy_capture.py live classification pipeline.
+- Two ground-truth test scenarios were run in a single continuous capture session (sniff() modified from count=100 to count=0, timeout=180 to support a full test window), separated by a 10-second gap to avoid flow bleed given the 2-second flow aggregation window:
+  1. Baseline normal traffic: a single curl request from Kali to Metasploitable.
+  2. Attack traffic: an nmap SYN scan (-sS) against Metasploitable across 1000 ports.
+- Metric used: recall on the ATTACK class (of all true attack flows, how many were correctly flagged), prioritized over plain accuracy since false negatives (missed attacks) are more costly than false positives in an IDS context.
+
+### Bug Found: Service-Port Normalization Flaw
+- Initial validation run showed 0/473 scan flows correctly flagged ATTACK (0% recall), despite the model performing at >99% accuracy in offline testing.
+- Root cause: flow-key normalization sorts the bidirectional 5-tuple by (ip, port), which for this test topology consistently placed Kali's fixed ephemeral source port into one specific tuple slot. The same_srv_rate/diff_srv_rate calculations were reading directly from that fixed slot instead of resolving the true service-side port, causing same_srv_rate to be pinned at 1.00 and diff_srv_rate at 0.00 for every flow regardless of how many distinct ports were actually scanned.
+- Fix: introduced a service_port variable using the same "check SERVICE_MAP on one port, fall back to the other" resolution logic already used for service-name lookup, and reused it consistently across the service, same_srv_rate, and diff_srv_rate calculations.
+
+### Results After Fix
+- Baseline (curl) flow: correctly predicted NORMAL.
+- Attack (nmap SYN scan) flows: 375 of 377 correctly predicted ATTACK — 99.47% recall on the attack class, 0 false positives on the normal-traffic baseline.
+
+### Remaining Misses: Architectural Explanation
+- The 2 missed flows were both on ports mapping to the domain_u (DNS) service, with small byte counts (Src=60, Dst=112 and Src=60, Dst=58) typical of legitimate DNS traffic.
+- Feature importance analysis of the trained Random Forest shows count (0.164), dst_bytes (0.135), and logged_in (0.124) as the top 3 features by weight.
+- logged_in — along with 27 other payload-dependent or host-based KDD99 features — is hardcoded to 0 in the live pipeline (justified elsewhere in this README: modern traffic is largely encrypted, consistent with tools like Zeek). This means nearly 12% of the model's decision weight comes from a feature that never varies in live deployment.
+- For these two specific flows, the service (domain_u) and dst_bytes (small, DNS-typical) both independently pointed toward NORMAL, and count alone wasn't sufficient to outweigh them. This is a genuine, documented model limitation rather than a pipeline bug — a small blind spot for scan probes that happen to route through DNS-mapped ports.
+
 ## Key Findings
 Feature importance analysis revealed that specific traffic characteristics—such as `src_bytes`, `dst_bytes`, and `count`—are the primary indicators of malicious activity. These features allow the models to distinguish between benign traffic and common attack patterns with high reliability.
 
