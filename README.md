@@ -75,7 +75,7 @@ Both models achieved **AUC = 1.000**, indicating near-perfect class separation.
 - For these two specific flows, the service (domain_u) and dst_bytes (small, DNS-typical) both independently pointed toward NORMAL, and count alone wasn't sufficient to outweigh them. This is a genuine, documented model limitation rather than a pipeline bug — a small blind spot for scan probes that happen to route through DNS-mapped ports.
 
 ## Key Findings
-Feature importance analysis revealed that specific traffic characteristics—such as `src_bytes`, `dst_bytes`, and `count`—are the primary indicators of malicious activity. These features allow the models to distinguish between benign traffic and common attack patterns with high reliability.
+Feature importance analysis of the trained Random Forest identified count, dst_bytes, and logged_in as the top three most influential features (importances of 0.164, 0.135, and 0.124 respectively), together accounting for nearly 42% of the model's total decision weight. Note that logged_in is hardcoded to 0 in the live scapy_capture.py pipeline (see Live Attack Validation section) since it depends on payload inspection unavailable in modern encrypted traffic — meaning a significant share of the model's learned decision weight is not actually variable in real-time deployment, a key architectural consideration documented further below.
 
 ## Limitations and Future Work
 - **Static Signatures:** The supervised models are limited to detecting known attack types; they cannot inherently identify new, evolving threats without retraining.
