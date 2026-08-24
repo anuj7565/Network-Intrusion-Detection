@@ -1,7 +1,29 @@
+import sqlite3
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Literal
 from scapy_capture import predict_flow
+
+def init_db():
+    conn = sqlite3.connect("nids.db")
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp INTEGER NOT NULL,
+            src_ip TEXT NOT NULL,
+            dst_ip TEXT NOT NULL,
+            duration REAL NOT NULL,
+            protocol_type TEXT NOT NULL,
+            service TEXT NOT NULL,
+            flag TEXT NOT NULL,
+            predicted_label TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
 
 app = FastAPI()
 
