@@ -4,8 +4,11 @@ from pydantic import BaseModel
 from typing import Literal
 from scapy_capture import predict_flow
 
+def get_db_connection():
+    return sqlite3.connect("nids.db")
+
 def init_db():
-    conn = sqlite3.connect("nids.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS alerts (
