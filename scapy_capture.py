@@ -2,6 +2,8 @@ from scapy.all import sniff, IP, TCP, UDP
 import joblib
 import numpy as np
 import pandas as pd
+import sqlite3
+import time
 
 # Configuration
 INTERFACE = "eth0"
@@ -17,6 +19,9 @@ encoders = joblib.load('encoders.pkl')
 scaler = joblib.load('scaler.pkl')
 feature_columns = joblib.load('feature_columns.pkl')
 rf_model = joblib.load('rf_model.pkl')
+
+def get_db_connection():
+    return sqlite3.connect("nids.db")
 
 def process_packet(packet):
     if not packet.haslayer(IP):
@@ -193,6 +198,18 @@ if __name__ == "__main__":
         features = extract_features(flow_key, packets, completed_flows)
         prediction = predict_flow(features)
         src_ip, src_port, dst_ip, dst_port, _ = flow_key
+        
+        predicted_label = "ATTACK" if prediction == 1 else "NORMAL"
+        timestamp = int(time.time())
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO alerts (timestamp, src_ip, dst_ip, duration, protocol_type, service, flag, predicted_label)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (timestamp, src_ip, dst_ip, features['duration'], features['protocol_type'], features['service'], features['flag'], predicted_label))
+        conn.commit()
+        conn.close()
         
         print(f"Flow: {src_ip}:{src_port} <-> {dst_ip}:{dst_port}")
         print(f"  Duration: {features['duration']:.4f}s")
