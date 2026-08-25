@@ -164,7 +164,7 @@ def predict_flow(features):
             features_copy[col] = encoders[col].transform([value])[0]
         except ValueError:
             print(f"Warning: unseen value '{value}' for column '{col}', defaulting to 0")
-            features_copy[col] = 0
+            features_copy[col]=0
     
     ordered_values = [features_copy[col] for col in feature_columns]
     ordered_df = pd.DataFrame([ordered_values], columns=feature_columns)
@@ -174,7 +174,7 @@ def predict_flow(features):
     return prediction[0]
 
 if __name__ == "__main__":
-    sniff(iface=INTERFACE, prn=process_packet, count=0, timeout=180)
+    sniff(iface=INTERFACE, prn=process_packet, count=0, timeout=120)
     
     # Build completed_flows list
     completed_flows = []
