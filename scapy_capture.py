@@ -178,7 +178,7 @@ def predict_flow(features):
     prediction = rf_model.predict(scaled_df)
     return prediction[0]
 
-if __name__ == "__main__":
+def run_capture():
     sniff(iface=INTERFACE, prn=process_packet, count=0, timeout=120)
     
     # Build completed_flows list
@@ -186,7 +186,6 @@ if __name__ == "__main__":
     for flow_key, packets in flows.items():
         _, _, dst_ip, dst_port, _ = flow_key
         completed_flows.append({
-            "dst_ip": dst_ip,
             "dst_port": dst_port,
             "last_time": packets[-1].time,
             "flag": get_flow_flag(packets)
@@ -221,3 +220,5 @@ if __name__ == "__main__":
         print(f"  Land: {features['land']}, Wrong Frag: {features['wrong_fragment']}, Urgent: {features['urgent']}")
         print(f"  Prediction: {'ATTACK' if prediction == 1 else 'NORMAL'}")
         print("-" * 60)
+if __name__ == "__main__":
+    run_capture()
