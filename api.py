@@ -88,3 +88,17 @@ def start_capture(background_tasks: BackgroundTasks):
         return {"status": "already_running", "message": "A capture is already in progress. Please wait for it to finish."}
     background_tasks.add_task(scapy_capture.run_capture)
     return {"status": "started", "message": "Capture started, running for 120 seconds."}
+
+@app.get("/alerts")
+def get_alerts(label: str = "ATTACK"):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if label == "all":
+        cursor.execute("SELECT * FROM alerts ORDER BY timestamp DESC")
+    else:
+        cursor.execute("SELECT * FROM alerts WHERE predicted_label = ? ORDER BY timestamp DESC", (label,))
+    rows = cursor.fetchall()
+    columns = [description[0] for description in cursor.description]
+    conn.close()
+    results = [dict(zip(columns, row)) for row in rows]
+    return {"count": len(results), "alerts": results}
