@@ -5,6 +5,8 @@ import pandas as pd
 import sqlite3
 import time
 
+capture_running = False
+
 # Configuration
 INTERFACE = "eth0"
 PROTOCOL_MAP = {6: "tcp", 17: "udp", 1: "icmp"}
@@ -179,6 +181,8 @@ def predict_flow(features):
     return prediction[0]
 
 def run_capture():
+    global capture_running
+    capture_running = True
     sniff(iface=INTERFACE, prn=process_packet, count=0, timeout=120)
     
     # Build completed_flows list
@@ -220,5 +224,6 @@ def run_capture():
         print(f"  Land: {features['land']}, Wrong Frag: {features['wrong_fragment']}, Urgent: {features['urgent']}")
         print(f"  Prediction: {'ATTACK' if prediction == 1 else 'NORMAL'}")
         print("-" * 60)
+    capture_running = False
 if __name__ == "__main__":
     run_capture()
