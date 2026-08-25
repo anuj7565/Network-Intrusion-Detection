@@ -190,6 +190,7 @@ def run_capture():
     for flow_key, packets in flows.items():
         _, _, dst_ip, dst_port, _ = flow_key
         completed_flows.append({
+            "dst_ip": dst_ip,
             "dst_port": dst_port,
             "last_time": packets[-1].time,
             "flag": get_flow_flag(packets)
