@@ -1,9 +1,8 @@
 import sqlite3
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Literal
 from scapy_capture import predict_flow
-import scapy_capture
 
 def get_db_connection():
     return sqlite3.connect("nids.db")
@@ -81,10 +80,3 @@ def predict(features: FlowFeatures):
     result = predict_flow(features.dict())
     label = "ATTACK" if int(result) == 1 else "NORMAL"
     return {"prediction": label}
-
-@app.post("/capture/start")
-def start_capture(background_tasks: BackgroundTasks):
-    if scapy_capture.capture_running:
-        return {"status": "already_running", "message": "A capture is already in progress. Please wait for it to finish."}
-    background_tasks.add_task(scapy_capture.run_capture)
-    return {"status": "started", "message": "Capture started, running for 120 seconds."}
